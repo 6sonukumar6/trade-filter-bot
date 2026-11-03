@@ -1,0 +1,7 @@
+name = "trade-filter-bot"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+# Optional: pick another free Gemini model (check which ones are free at aistudio.google.com/rate-limit).
+# [vars]
+# MODEL = "gemini-2.5-flash"

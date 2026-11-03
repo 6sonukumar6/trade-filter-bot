@@ -1,0 +1,36 @@
+name: Deploy bot
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      WORKER_URL: ${{ secrets.WORKER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare and set secrets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          secrets: |
+            TELEGRAM_BOT_TOKEN
+            GEMINI_API_KEY
+            WEBHOOK_SECRET
+            ALLOWED_CHAT_ID
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          ALLOWED_CHAT_ID: ${{ secrets.ALLOWED_CHAT_ID }}
+
+      - name: Register Telegram webhook (runs once WORKER_URL secret exists)
+        if: env.WORKER_URL != ''
+        run: |
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook" \
+            --data-urlencode "url=${{ secrets.WORKER_URL }}" \
+            --data-urlencode "secret_token=${{ secrets.WEBHOOK_SECRET }}"

@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local testing with "npm run dev". Never commit .dev.vars.
+TELEGRAM_BOT_TOKEN=123456:ABC-your-bot-token
+ANTHROPIC_API_KEY=sk-ant-your-key
+WEBHOOK_SECRET=k39dj28dh2k1
+ALLOWED_CHAT_ID=123456789
