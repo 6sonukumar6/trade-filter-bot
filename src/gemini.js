@@ -55,4 +55,4 @@ export async function analyseChart(env, base64, mediaType, userPrompt) {
 
   if (limited) return "Free limit reached for now (Gemini free tier). Try again in a minute, or tomorrow if the daily limit is used up.";
   throw new Error(lastErr || "no reply from Gemini");
-}
+
