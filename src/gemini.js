@@ -1,19 +1,21 @@
 // Calls the Google Gemini API (free tier) with the chart image.
 import { MODELS, MAX_TOKENS } from "./config.js";
 import { SYSTEM_PROMPT } from "./prompt.js";
+import { analyseWithGroq } from "./groq.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const BUSY = [500, 502, 503, 504];
 
 export async function analyseChart(env, base64, mediaType, userPrompt) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY secret is missing on the Worker");
-  const models = env.MODEL ? [env.MODEL] : MODELS;
+  const models = env.MODEL ? [env.MODEL] : [...MODELS, "gemini-2.5-flash-lite"];
+  const passes = env.GROQ_API_KEY ? 1 : 2; // with a backup key, switch to Groq at once instead of waiting
   let lastErr = "";
   let limited = false;
   let busy = false;
 
   // Two passes: if Google is busy, wait a few seconds and try the models once more.
-  for (let pass = 0; pass < 2; pass++) {
+  for (let pass = 0; pass < passes; pass++) {
     busy = false;
     for (const model of models) {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -46,6 +48,14 @@ export async function analyseChart(env, base64, mediaType, userPrompt) {
     }
     if (!busy) break;
     await sleep(3000);
+  }
+
+  if (env.GROQ_API_KEY) {
+    try {
+      return await analyseWithGroq(env, base64, mediaType, userPrompt);
+    } catch (e) {
+      lastErr = `${lastErr} | ${String(e).slice(0, 200)}`;
+    }
   }
 
   if (busy) return "Google's free Gemini model is busy right now. Please send the screenshot again in a minute.";
